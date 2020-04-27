@@ -1,0 +1,11 @@
+server:
+  port: 0
+spring:
+  application:
+    name: zephyr-service
+  cloud:
+    consul:
+      config:
+        enabled: true
+      discovery:
+        instanceId: ${spring.application.name}:${random.value}

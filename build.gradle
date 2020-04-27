@@ -1,0 +1,61 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+    id 'jacoco'
+}
+
+group = 'com.accela'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'org.springframework.boot:spring-boot-starter:2.2.6.RELEASE'
+    implementation 'org.springframework.cloud:spring-cloud-starter-consul-all:2.2.2.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-webflux:2.2.6.RELEASE'
+    compile 'org.projectreactor:reactor-spring:1.0.1.RELEASE'
+    compile('org.springframework.boot:spring-boot-starter-web:2.2.6.RELEASE') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    implementation "ch.qos.logback:logback-classic:1.2.3"
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+    testCompile 'com.github.tomakehurst:wiremock-jre8:2.26.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/Zephyr.class',
+                    '**/Zodiac.class'
+            ])
+        })
+    }
+}
