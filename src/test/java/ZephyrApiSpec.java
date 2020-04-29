@@ -8,20 +8,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.ZonedDateTime;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { ApiController.class })
 @WebMvcTest(ApiController.class)
+@TestPropertySource(properties = "spring.cloud.consul.config.enabled=false")
 public class ZephyrApiSpec {
 
     @Autowired
@@ -42,6 +44,14 @@ public class ZephyrApiSpec {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.timestamp", is(expectDateTime)));
+    }
+
+    @Test
+    @DisplayName("Health check API call succeeds")
+    public void checkHealthCheck() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("zephyr health ok"));
     }
 
 }

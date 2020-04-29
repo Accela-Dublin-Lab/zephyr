@@ -1,6 +1,5 @@
 import com.accela.zodiac.ApiController;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -13,9 +12,9 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClient;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.net.URI;
@@ -23,14 +22,15 @@ import java.util.Collections;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { ApiController.class })
 @WebMvcTest(ApiController.class)
+@TestPropertySource(properties = "spring.cloud.consul.config.enabled=false")
 public class ZodiacApiSpec {
     private static final String testEndpoint = "http://localhost:8080";
 
@@ -75,12 +75,18 @@ public class ZodiacApiSpec {
                   "<html><body><h1>Zephyr will blow at...</h1>" +
                   "<h2>Wednesday, January 1, 2020 12:35:01 PM Z</h2></body></html>";
 
-        final MvcResult response = mvc.perform(MockMvcRequestBuilders.get("/forecast")
+        mvc.perform(MockMvcRequestBuilders.get("/forecast")
                 .contentType(MediaType.TEXT_HTML_VALUE))
                 .andExpect(status().isOk())
-                .andReturn();
+                .andExpect(content().string(expectResponse));
+    }
 
-        assertEquals(expectResponse, response.getResponse().getContentAsString());
+    @Test
+    @DisplayName("Health check API call succeeds")
+    public void checkHealthCheck() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("zodiac health ok"));
     }
 
 }
